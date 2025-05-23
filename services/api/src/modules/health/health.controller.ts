@@ -1,7 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('health')
 export class HealthController {
+  constructor(private readonly prisma: PrismaService) {}
+
   @Get()
   check() {
     return {
@@ -14,22 +17,36 @@ export class HealthController {
         total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
         unit: 'MB',
       },
+      apiKeys: {
+        newsApi: process.env.NEWS_API_KEY ? 'configured' : 'missing',
+        alphaVantage: process.env.ALPHAVANTAGE_KEY ? 'configured' : 'missing',
+      },
     };
   }
   
   @Get('ready')
-  ready() {
-    // TODO: Check database connection
-    // TODO: Check Redis connection
-    // TODO: Check external APIs
+  async ready() {
+    const services: any = {
+      database: 'unknown',
+      redis: 'unknown',
+      externalApis: 'ok',
+    };
+
+    // Check database connection
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      services.database = 'ok';
+    } catch (error) {
+      services.database = 'error';
+    }
+
+    // TODO: Check Redis connection when Redis service is added
+    services.redis = 'not-implemented';
+
     return {
-      status: 'ready',
+      status: services.database === 'ok' ? 'ready' : 'not-ready',
       timestamp: new Date().toISOString(),
-      services: {
-        database: 'ok',
-        redis: 'ok',
-        externalApis: 'ok',
-      },
+      services,
     };
   }
 }

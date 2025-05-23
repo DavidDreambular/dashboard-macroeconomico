@@ -28,3 +28,18 @@ export class MarketController {
     return this.marketService.getMarketHistory(days);
   }
 }
+  @Get('market-data')
+  @ApiOperation({ summary: 'Get real-time market data for a symbol' })
+  @ApiQuery({ name: 'symbol', required: true, type: String, example: 'AAPL' })
+  async getMarketData(@Query('symbol') symbol: string) {
+    return this.marketService.getMarketData(symbol);
+  }
+
+  @Get('quotes')
+  @ApiOperation({ summary: 'Get quotes for multiple symbols' })
+  @ApiQuery({ name: 'symbols', required: true, type: String, example: 'AAPL,MSFT,GOOGL' })
+  async getMultipleQuotes(@Query('symbols') symbols: string) {
+    const symbolList = symbols.split(',').map(s => s.trim());
+    return this.marketService.getMultipleQuotes(symbolList);
+  }
+}
