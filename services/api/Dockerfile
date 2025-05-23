@@ -27,16 +27,23 @@ WORKDIR /app
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
 
-# Copy package files
+# Copy package files and Prisma schema
 COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install production dependencies only
 RUN npm install --production && npm cache clean --force
 
-# Copy built application
+# Install Prisma CLI for migrations
+RUN npm install prisma --save-dev
+
+# Copy built application and start script
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY start.sh ./
+
+# Make start script executable
+RUN chmod +x start.sh
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
@@ -47,8 +54,8 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
 # Start the application
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/main"]
+CMD ["./start.sh"]
