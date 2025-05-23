@@ -45,11 +45,24 @@ export function NewsList() {
     );
   }
 
-  const getSentimentBadge = (sentiment?: string) => {
-    if (!sentiment) return null;
-    const variant = sentiment === 'POSITIVE' ? 'success' : 
-                   sentiment === 'NEGATIVE' ? 'destructive' : 'secondary';
-    return <Badge variant={variant}>{sentiment}</Badge>;
+  const getSentimentBadge = (sentiment?: number) => {
+    if (sentiment === undefined || sentiment === null) return null;
+    
+    let label: string;
+    let variant: 'success' | 'destructive' | 'secondary';
+    
+    if (sentiment > 0.3) {
+      label = 'POSITIVE';
+      variant = 'success';
+    } else if (sentiment < -0.3) {
+      label = 'NEGATIVE';
+      variant = 'destructive';
+    } else {
+      label = 'NEUTRAL';
+      variant = 'secondary';
+    }
+    
+    return <Badge variant={variant}>{label}</Badge>;
   };
 
   return (

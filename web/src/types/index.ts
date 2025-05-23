@@ -37,9 +37,10 @@ export interface News {
   url: string;
   source: string;
   publishedAt: string;
-  sentiment?: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
-  relevance?: number;
-  tags?: string[];
+  sentiment?: number; // -1 to 1
+  keywords?: string[];
+  category?: string;
+  processed?: boolean;
 }
 
 // Ticker Types
@@ -103,5 +104,9 @@ export interface HealthStatus {
     database: boolean;
     redis: boolean;
     external_apis: boolean;
+  };
+  apiKeys?: {
+    newsApi: string;
+    alphaVantage: string;
   };
 }
