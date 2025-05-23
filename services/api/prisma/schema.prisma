@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo para tickers/activos a seguir
+model Ticker {
+  id          String   @id @default(cuid())
+  symbol      String   @unique
+  name        String
+  sector      String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  fundamentals Fundamental[]
+  technicals   Technical[]
+  signals      Signal[]
+}
+
+// Modelo para noticias macroeconómicas
+model News {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  content     String?  @db.Text
+  source      String
+  url         String
+  publishedAt DateTime
+  keywords    String[]
+  sentiment   Float?   // -1 to 1
+  category    String?
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  @@index([publishedAt])
+  @@index([processed])
+}
+// Modelo para datos fundamentales
+model Fundamental {
+  id              String   @id @default(cuid())
+  tickerId        String
+  ticker          Ticker   @relation(fields: [tickerId], references: [id])
+  peRatio         Float?   // Price to Earnings
+  pbRatio         Float?   // Price to Book
+  psRatio         Float?   // Price to Sales
+  pegRatio        Float?   // Price/Earnings to Growth
+  dividendYield   Float?
+  roe             Float?   // Return on Equity
+  roa             Float?   // Return on Assets
+  debtToEquity    Float?
+  currentRatio    Float?
+  quickRatio      Float?
+  grossMargin     Float?
+  operatingMargin Float?
+  netMargin       Float?
+  revenueGrowth   Float?
+  earningsGrowth  Float?
+  marketCap       Float?
+  enterpriseValue Float?
+  fetchedAt       DateTime @default(now())
+  
+  @@index([tickerId, fetchedAt])
+}
+
+// Modelo para indicadores técnicos
+model Technical {
+  id         String   @id @default(cuid())
+  tickerId   String
+  ticker     Ticker   @relation(fields: [tickerId], references: [id])
+  price      Float
+  volume     Float
+  sma20      Float?   // Simple Moving Average 20
+  sma50      Float?   // Simple Moving Average 50
+  sma200     Float?   // Simple Moving Average 200
+  ema20      Float?   // Exponential Moving Average 20
+  ema50      Float?   // Exponential Moving Average 50
+  rsi        Float?   // Relative Strength Index
+  macd       Float?   // MACD line
+  macdSignal Float?   // MACD signal line
+  macdHist   Float?   // MACD histogram
+  atr        Float?   // Average True Range
+  bb_upper   Float?   // Bollinger Band Upper
+  bb_middle  Float?   // Bollinger Band Middle
+  bb_lower   Float?   // Bollinger Band Lower
+  timestamp  DateTime
+  createdAt  DateTime @default(now())
+  
+  @@index([tickerId, timestamp])
+}
+// Estado del mercado
+enum MarketState {
+  BULLISH   // Alcista
+  BEARISH   // Bajista
+  NEUTRAL   // Lateral
+  VOLATILE  // Alta volatilidad
+}
+
+// Tipo de señal
+enum SignalType {
+  BUY
+  SELL
+  HOLD
+  STRONG_BUY
+  STRONG_SELL
+}
+
+// Modelo para el estado general del mercado
+model MarketStatus {
+  id          String      @id @default(cuid())
+  state       MarketState
+  confidence  Float       // 0 to 1
+  indicators  Json        // JSON con indicadores clave
+  summary     String      @db.Text
+  timestamp   DateTime    @default(now())
+  
+  @@index([timestamp])
+}
+
+// Modelo para señales de trading
+model Signal {
+  id          String     @id @default(cuid())
+  tickerId    String?
+  ticker      Ticker?    @relation(fields: [tickerId], references: [id])
+  type        SignalType
+  strength    Float      // 0 to 1
+  reason      String     @db.Text
+  indicators  Json       // JSON con indicadores que generaron la señal
+  price       Float?     // Precio al momento de la señal
+  targetPrice Float?     // Precio objetivo
+  stopLoss    Float?     // Stop loss sugerido
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  expiresAt   DateTime?
+  
+  @@index([tickerId, active])
+  @@index([createdAt])
+  @@index([type])
+}

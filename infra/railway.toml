@@ -1,0 +1,34 @@
+# railway.toml
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm run start:prod"
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "always"
+
+[[services]]
+name = "api"
+source = "services/api"
+builder = "dockerfile"
+dockerfile = "services/api/Dockerfile"
+
+[[services.domains]]
+domain = "${RAILWAY_PUBLIC_DOMAIN}"
+
+[[services]]
+name = "web"
+source = "web"
+builder = "dockerfile"
+dockerfile = "web/Dockerfile"
+
+[[services.domains]]
+domain = "${RAILWAY_PUBLIC_DOMAIN}"
+
+[environments.production]
+NODE_ENV = "production"
+
+[environments.staging]
+NODE_ENV = "staging"
