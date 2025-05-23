@@ -25,8 +25,8 @@ export class SchedulerService {
 
     this.logger.log('Starting news fetch task...');
     try {
-      const news = await this.newsService.fetchMacroNews();
-      this.logger.log(`Fetched ${news.length} news articles`);
+      const result = await this.newsService.fetchAndSaveNews();
+      this.logger.log(`Fetched ${result.count} news articles`);
     } catch (error) {
       this.logger.error('Error in news fetch task:', error);
     }

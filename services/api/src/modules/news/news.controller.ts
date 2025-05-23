@@ -1,4 +1,4 @@
-import { Controller, Get, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Query, ParseIntPipe, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { NewsService } from './news.service';
 
@@ -14,20 +14,9 @@ export class NewsController {
     return this.newsService.getRecentNews(limit);
   }
 
-  @Get('fetch')
+  @Post('fetch')
   @ApiOperation({ summary: 'Fetch new news from external API' })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  async fetchNews(@Query('page', new ParseIntPipe({ optional: true })) page = 1) {
-    const news = await this.newsService.fetchMacroNews(page);
-    return {
-      count: news.length,
-      message: `Fetched ${news.length} news articles`,
-    };
-  }
-
-  @Get('unprocessed')
-  @ApiOperation({ summary: 'Get unprocessed news for analysis' })
-  async getUnprocessedNews() {
-    return this.newsService.getUnprocessedNews();
+  async fetchNews() {
+    return this.newsService.fetchAndSaveNews();
   }
 }

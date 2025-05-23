@@ -27,7 +27,7 @@ export class MarketController {
   async getHistory(@Query('days', new ParseIntPipe({ optional: true })) days = 30) {
     return this.marketService.getMarketHistory(days);
   }
-}
+
   @Get('market-data')
   @ApiOperation({ summary: 'Get real-time market data for a symbol' })
   @ApiQuery({ name: 'symbol', required: true, type: String, example: 'AAPL' })

@@ -71,8 +71,7 @@ export class NewsService {
             source: article.source.name,
             publishedAt: new Date(article.publishedAt),
             sentiment: this.analyzeSentiment(article.title + ' ' + article.description),
-            relevance: this.calculateRelevance(article),
-            tags: this.extractTags(article),
+            keywords: this.extractTags(article),
           },
         });
         savedCount++;
@@ -109,7 +108,7 @@ export class NewsService {
     return { message: 'Mock news saved', count: savedCount };
   }
 
-  private analyzeSentiment(text: string): 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' {
+  private analyzeSentiment(text: string): number {
     const positiveWords = ['growth', 'increase', 'improve', 'gain', 'rise', 'boost'];
     const negativeWords = ['decline', 'fall', 'drop', 'decrease', 'loss', 'recession'];
     
@@ -117,9 +116,12 @@ export class NewsService {
     const positiveCount = positiveWords.filter(word => textLower.includes(word)).length;
     const negativeCount = negativeWords.filter(word => textLower.includes(word)).length;
     
-    if (positiveCount > negativeCount) return 'POSITIVE';
-    if (negativeCount > positiveCount) return 'NEGATIVE';
-    return 'NEUTRAL';
+    // Return a value between -1 and 1
+    const totalWords = positiveCount + negativeCount;
+    if (totalWords === 0) return 0; // Neutral
+    
+    const sentiment = (positiveCount - negativeCount) / totalWords;
+    return sentiment; // Range from -1 to 1
   }
 
   private calculateRelevance(article: any): number {

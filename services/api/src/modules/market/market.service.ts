@@ -47,7 +47,7 @@ export class MarketService {
       },
     });
   }
-}
+
   async getMarketData(symbol: string) {
     try {
       const quote = await this.alphaVantage.getQuote(symbol);
