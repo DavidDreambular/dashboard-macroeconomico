@@ -1,53 +1,23 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Simple single-stage Dockerfile for Railway
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Copy everything from services/api
 COPY services/api/package*.json ./
 COPY services/api/prisma ./prisma/
 
-# Install dependencies
+# Install all dependencies (including dev for Prisma CLI)
 RUN npm install
 
 # Copy source code
 COPY services/api/. .
 
-# Generate Prisma client
+# Generate Prisma Client
 RUN npx prisma generate
 
 # Build the application
 RUN npm run build
-
-# Production stage
-FROM node:20-alpine
-
-WORKDIR /app
-
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
-
-# Copy package files and Prisma schema
-COPY services/api/package*.json ./
-COPY services/api/prisma ./prisma/
-
-# Install production dependencies only
-RUN npm install --production && npm cache clean --force
-
-# Install Prisma CLI for migrations
-RUN npm install prisma --save-dev
-
-# Copy built application and start script
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY services/api/start.sh ./
-
-# Make start script executable
-RUN chmod +x start.sh
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
-USER nodejs
 
 # Expose port
 EXPOSE 3000
@@ -56,6 +26,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
-# Start the application
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["./start.sh"]
+# Run migrations and start the application
+CMD npx prisma migrate deploy && npm run start:prod
